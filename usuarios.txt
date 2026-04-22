@@ -1,0 +1,6 @@
+# Archivo de credenciales del sistema
+# Formato: usuario:contraseña:nombre_completo:rol
+admin:admin123:Administrador del Sistema:admin
+miriam:batizcecyt9:Miriam IPN:usuario
+alumno:ipn2024:Alumno Politécnico:usuario
+profesor:docente2024:Profesor Bátiz:admin
