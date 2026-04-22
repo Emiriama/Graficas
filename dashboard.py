@@ -1,5 +1,5 @@
 # dashboard.py
-# Proyecto: Dashboard de Ciudades Mundiales
+# Proyecto: Dashboard de Camaras Fotograficas
 # Materia: Fundamentos de Inteligencia Artificial
 # Herramientas: CustomTkinter, Pandas, Matplotlib
 
@@ -7,15 +7,15 @@ import customtkinter as ctk
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import tkinter as tk
 import os
 import sys
 
 
-# Rutas de los archivos
-CARPETA    = os.path.dirname(os.path.abspath(__file__))
-ARCHIVO_CSV     = os.path.join(CARPETA, "ciudades.csv")
-ARCHIVO_USUARIOS = os.path.join(CARPETA, "usuarios.txt")
 
+CARPETA          = os.path.dirname(os.path.abspath(__file__))
+ARCHIVO_CSV      = os.path.join(CARPETA, "csv_camaras_2.csv")
+ARCHIVO_USUARIOS = os.path.join(CARPETA, "usuarios.txt")
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -24,7 +24,7 @@ ctk.set_default_color_theme("blue")
 
 def leer_usuarios():
     """
-    Lee el archivo usuarios.txt y devuelve un diccionario.
+    Lee usuarios.txt y devuelve un diccionario.
     Formato de cada linea: usuario:contrasena:nombre:rol
     """
     usuarios = {}
@@ -49,17 +49,29 @@ def leer_usuarios():
 
 def leer_csv():
     """
-    Lee el archivo ciudades.csv y devuelve un DataFrame de pandas.
-    Convierte las columnas numericas al tipo correcto.
+    Lee camaras.csv y devuelve un DataFrame de pandas.
+    Limpia y convierte las columnas al tipo correcto.
     """
     df = pd.read_csv(ARCHIVO_CSV, encoding="utf-8")
+
+
+    df.columns = [
+        "modelo", "zoom", "enfoque_normal",
+        "enfoque_macro", "almacenamiento",
+        "peso", "dimensiones", "precio"
+    ]
+
+
     columnas_numericas = [
-        "poblacion", "area_km2", "densidad", "pib_per_capita",
-        "temperatura_media", "precipitacion_anual", "esperanza_vida",
-        "alfabetizacion", "año_fundacion"
+        "zoom", "enfoque_normal", "enfoque_macro",
+        "almacenamiento", "peso", "dimensiones", "precio"
     ]
     for col in columnas_numericas:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Extraer la marca del nombre del modelo (primera palabra)
+    df["marca"] = df["modelo"].str.split().str[0]
+
     return df
 
 
@@ -71,44 +83,35 @@ class VentanaLogin(ctk.CTk):
         self.geometry("400x420")
         self.resizable(False, False)
 
-        # Leer usuarios del archivo
         self.usuarios = leer_usuarios()
-
         self.construir_interfaz()
 
     def construir_interfaz(self):
 
-
-        ctk.CTkLabel(self, text="Dashboard de Ciudades",
+        ctk.CTkLabel(self, text="Dashboard de Camaras",
                      font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(30, 5))
 
-
-        # Campo usuario
         ctk.CTkLabel(self, text="Usuario:").pack(anchor="w", padx=60)
         self.campo_usuario = ctk.CTkEntry(self, width=280,
                                           placeholder_text="")
         self.campo_usuario.pack(pady=(2, 12))
 
-        # Campo contrasena
         ctk.CTkLabel(self, text="Contrasena:").pack(anchor="w", padx=60)
         self.campo_contrasena = ctk.CTkEntry(self, width=280,
                                               placeholder_text="",
                                               show="*")
         self.campo_contrasena.pack(pady=(2, 8))
 
-        # Etiqueta de error (empieza vacia)
+
         self.etiqueta_error = ctk.CTkLabel(self, text="", text_color="red",
                                            font=ctk.CTkFont(size=12))
         self.etiqueta_error.pack(pady=(0, 8))
 
-        # Boton entrar
         ctk.CTkButton(self, text="Entrar", width=280,
                       command=self.intentar_login).pack()
 
-        # Presionar Enter tambien inicia sesion
         self.campo_contrasena.bind("<Return>", lambda e: self.intentar_login())
 
-        # Nota con credenciales de prueba
         ctk.CTkLabel(self, text="Prueba: admin / admin123",
                      font=ctk.CTkFont(size=10),
                      text_color="gray").pack(pady=(16, 0))
@@ -120,10 +123,6 @@ class VentanaLogin(ctk.CTk):
             self.campo_contrasena.configure(show="*")
 
     def validar_campos(self, usuario, contrasena):
-        """
-        Revisa que los campos tengan datos validos.
-        Devuelve un mensaje de error, o cadena vacia si todo esta bien.
-        """
         if not usuario:
             return "El usuario no puede estar vacio."
         if not contrasena:
@@ -138,13 +137,11 @@ class VentanaLogin(ctk.CTk):
         usuario    = self.campo_usuario.get().strip()
         contrasena = self.campo_contrasena.get()
 
-        # Paso 1: validar formato
         error = self.validar_campos(usuario, contrasena)
         if error:
             self.etiqueta_error.configure(text=error)
             return
 
-        # Paso 2: verificar contra el archivo
         if usuario not in self.usuarios:
             self.etiqueta_error.configure(text="Usuario no encontrado.")
             return
@@ -154,7 +151,6 @@ class VentanaLogin(ctk.CTk):
             self.etiqueta_error.configure(text="Contrasena incorrecta.")
             return
 
-        # Paso 3: acceso correcto, abrir dashboard
         self.destroy()
         ventana_principal = VentanaDashboard(
             nombre=datos_usuario["nombre"],
@@ -171,7 +167,7 @@ class VentanaDashboard(ctk.CTk):
     def __init__(self, nombre, rol):
         super().__init__()
 
-        self.title("Dashboard de Ciudades Mundiales")
+        self.title("Dashboard de Camaras Fotograficas")
         self.geometry("1100x700")
         self.minsize(900, 600)
 
@@ -183,13 +179,13 @@ class VentanaDashboard(ctk.CTk):
 
     def construir_interfaz(self):
 
-        # --- Barra superior ---
+        # Barra superior
         barra_top = ctk.CTkFrame(self, height=45, corner_radius=0)
         barra_top.pack(fill="x", side="top")
         barra_top.pack_propagate(False)
 
         ctk.CTkLabel(barra_top,
-                     text="Dashboard de Ciudades Mundiales",
+                     text="Dashboard de Camaras Fotograficas",
                      font=ctk.CTkFont(size=16, weight="bold")).pack(side="left", padx=20)
 
         ctk.CTkLabel(barra_top,
@@ -197,63 +193,53 @@ class VentanaDashboard(ctk.CTk):
                      font=ctk.CTkFont(size=12),
                      text_color="gray").pack(side="right", padx=20)
 
-        # --- Contenedor principal ---
+        # Contenedor principal
         contenedor = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
         contenedor.pack(fill="both", expand=True)
 
-        # --- Sidebar izquierdo con los botones de consulta ---
-        self.sidebar = ctk.CTkScrollableFrame(contenedor, width=200, corner_radius=0)
-        self.sidebar.pack(fill="y", side="left", padx=(0, 0))
+        # Sidebar con botones
+        self.sidebar = ctk.CTkScrollableFrame(contenedor, width=210, corner_radius=0)
+        self.sidebar.pack(fill="y", side="left")
 
         ctk.CTkLabel(self.sidebar, text="Consultas",
                      font=ctk.CTkFont(size=13, weight="bold")).pack(pady=(15, 10))
 
-        # Lista de consultas: (texto del boton, funcion)
         consultas = [
-            ("1. Top 10 pobladas",         self.consulta_1),
-            ("2. Ciudades por continente",  self.consulta_2),
-            ("3. PIB por continente",       self.consulta_3),
-            ("4. Temperatura vs vida",      self.consulta_4),
-            ("5. Densidad poblacional",     self.consulta_5),
-            ("6. Precipitacion anual",      self.consulta_6),
-            ("7. Alfabetizacion",           self.consulta_7),
-            ("8. Antiguas vs modernas",     self.consulta_8),
-            ("9. PIB vs esperanza vida",    self.consulta_9),
-            ("10. Poblacion mundial",       self.consulta_10),
+            ("1. Camaras por marca",           self.consulta_1),
+            ("2. Distribucion de precios",      self.consulta_2),
+            ("3. Top 10 mas caras",             self.consulta_3),
+            ("4. Top 10 mas baratas",           self.consulta_4),
+            ("5. Precio por marca",             self.consulta_5),
+            ("6. Zoom por marca",               self.consulta_6),
+            ("7. Peso vs Precio",               self.consulta_7),
+            ("8. Almacenamiento incluido",      self.consulta_8),
+            ("9. Enfoque normal vs macro",      self.consulta_9),
+            ("10. Camaras por rango de precio", self.consulta_10),
         ]
 
         for texto, funcion in consultas:
             ctk.CTkButton(self.sidebar, text=texto,
-                          anchor="w", width=180,
+                          anchor="w", width=190,
                           command=funcion).pack(pady=3, padx=8)
 
-        # --- Frame de resultados (derecha) ---
-        # Usamos un Canvas de tkinter con scrollbar para que las graficas
-        # de matplotlib se rendericen correctamente
-        import tkinter as tk
-
-        # Contenedor externo del area de resultados
+        # Area de resultados con scroll manual (compatible con matplotlib)
         frame_derecha = ctk.CTkFrame(contenedor, corner_radius=0, fg_color="transparent")
         frame_derecha.pack(fill="both", expand=True, side="left")
 
-        # Scrollbar vertical
         scrollbar = ctk.CTkScrollbar(frame_derecha)
         scrollbar.pack(fill="y", side="right")
 
-        # Canvas que permite el scroll
-        self.canvas_scroll = tk.Canvas(frame_derecha, bg="#2b2b2b",
+        self.canvas_scroll = tk.Canvas(frame_derecha,
                                        highlightthickness=0,
                                        yscrollcommand=scrollbar.set)
         self.canvas_scroll.pack(fill="both", expand=True, side="left")
         scrollbar.configure(command=self.canvas_scroll.yview)
 
-        # Frame interno donde van los widgets reales
         self.frame_resultados = ctk.CTkFrame(self.canvas_scroll,
                                               corner_radius=0, fg_color="transparent")
         self.ventana_canvas = self.canvas_scroll.create_window(
             (0, 0), window=self.frame_resultados, anchor="nw")
 
-        # Actualizar el area de scroll cuando cambia el contenido
         def actualizar_scroll(event=None):
             self.canvas_scroll.configure(scrollregion=self.canvas_scroll.bbox("all"))
 
@@ -263,13 +249,11 @@ class VentanaDashboard(ctk.CTk):
         self.frame_resultados.bind("<Configure>", actualizar_scroll)
         self.canvas_scroll.bind("<Configure>", ajustar_ancho)
 
-        # Scroll con rueda del mouse
         def scroll_mouse(event):
             self.canvas_scroll.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
         self.canvas_scroll.bind_all("<MouseWheel>", scroll_mouse)
 
-        # Mostrar mensaje de bienvenida al inicio
         self.mostrar_bienvenida()
 
     # ---------------------------------------------------
@@ -277,12 +261,11 @@ class VentanaDashboard(ctk.CTk):
     # ---------------------------------------------------
 
     def limpiar_resultados(self):
-        """Elimina todo lo que hay en el frame de resultados."""
         for widget in self.frame_resultados.winfo_children():
             widget.destroy()
+        self.canvas_scroll.yview_moveto(0)
 
     def mostrar_titulo(self, titulo, subtitulo=""):
-        """Muestra un titulo y subtitulo en el frame de resultados."""
         ctk.CTkLabel(self.frame_resultados,
                      text=titulo,
                      font=ctk.CTkFont(size=18, weight="bold")).pack(anchor="w", padx=20, pady=(20, 2))
@@ -293,27 +276,23 @@ class VentanaDashboard(ctk.CTk):
                          text_color="gray").pack(anchor="w", padx=20, pady=(0, 10))
 
     def mostrar_grafica(self, fig):
-        """Incrusta una figura de matplotlib en el frame de resultados."""
         canvas = FigureCanvasTkAgg(fig, master=self.frame_resultados)
         canvas.draw()
-        canvas.get_tk_widget().pack(padx=20, pady=10, fill="both", expand=True)
+        canvas.get_tk_widget().pack(padx=20, pady=10, fill="x")
         plt.close(fig)
 
     def mostrar_tabla(self, dataframe):
-        """Muestra un DataFrame como tabla en el frame de resultados."""
         frame_tabla = ctk.CTkFrame(self.frame_resultados)
         frame_tabla.pack(padx=20, pady=10, fill="x")
 
         columnas = list(dataframe.columns)
 
-        # Encabezados
         for j, col in enumerate(columnas):
             ctk.CTkLabel(frame_tabla, text=str(col),
                          font=ctk.CTkFont(weight="bold"),
                          width=160).grid(row=0, column=j, padx=4, pady=4)
             frame_tabla.grid_columnconfigure(j, weight=1)
 
-        # Filas de datos
         for i, fila in enumerate(dataframe.itertuples(index=False), start=1):
             for j, valor in enumerate(fila):
                 ctk.CTkLabel(frame_tabla, text=str(valor),
@@ -325,268 +304,267 @@ class VentanaDashboard(ctk.CTk):
                      text=f"Bienvenido, {self.nombre}",
                      font=ctk.CTkFont(size=22, weight="bold")).pack(pady=(80, 10))
         ctk.CTkLabel(self.frame_resultados,
-                     text=f"Dataset cargado: {len(self.df)} ciudades en {self.df['continente'].nunique()} continentes.\nSelecciona una consulta del menu izquierdo.",
+                     text=f"Dataset cargado: {len(self.df)} camaras de {self.df['marca'].nunique()} marcas.\n"
+                          "Selecciona una consulta del menu izquierdo.",
                      font=ctk.CTkFont(size=13),
                      text_color="gray",
                      justify="center").pack()
 
     # ---------------------------------------------------
-    # CONSULTAS (10 en total)
+    # CONSULTAS
     # ---------------------------------------------------
 
     def consulta_1(self):
-        """Top 10 ciudades mas pobladas — grafica de barras horizontales"""
+        """Cuantas camaras hay por marca — Top 15 marcas"""
         self.limpiar_resultados()
-        self.mostrar_titulo("Top 10 ciudades mas pobladas",
-                            "Las 10 ciudades con mayor numero de habitantes")
+        self.mostrar_titulo("Camaras por marca",
+                            "Top 15 marcas con mas modelos en el dataset")
 
-        # Obtener los datos
-        top10 = self.df.nlargest(10, "poblacion")[["ciudad", "pais", "poblacion"]].copy()
-        top10["poblacion_millones"] = (top10["poblacion"] / 1_000_000).round(2)
+        conteo = self.df["marca"].value_counts().head(15).reset_index()
+        conteo.columns = ["marca", "cantidad"]
 
-        # Crear la grafica
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.barh(top10["ciudad"][::-1], top10["poblacion_millones"][::-1], color="steelblue")
-        ax.set_xlabel("Poblacion (millones)")
-        ax.set_title("Top 10 ciudades mas pobladas")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.barh(conteo["marca"][::-1], conteo["cantidad"][::-1], color="steelblue")
+        ax.set_xlabel("Numero de modelos")
+        ax.set_title("Top 15 marcas con mas modelos")
         ax.grid(axis="x", alpha=0.4)
-        fig.tight_layout()
-
-        self.mostrar_grafica(fig)
-        self.mostrar_tabla(top10[["ciudad", "pais", "poblacion_millones"]].reset_index(drop=True))
-
-    def consulta_2(self):
-        """Numero de ciudades por continente — grafica de pastel y barras"""
-        self.limpiar_resultados()
-        self.mostrar_titulo("Ciudades por continente",
-                            "Cuantas ciudades del dataset hay en cada continente")
-
-        conteo = self.df["continente"].value_counts().reset_index()
-        conteo.columns = ["continente", "cantidad"]
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
-
-        ax1.pie(conteo["cantidad"], labels=conteo["continente"],
-                autopct="%1.0f%%", startangle=90)
-        ax1.set_title("Proporcion (%)")
-
-        ax2.bar(conteo["continente"], conteo["cantidad"], color="steelblue")
-        ax2.set_ylabel("Cantidad de ciudades")
-        ax2.set_title("Total por continente")
-        plt.setp(ax2.get_xticklabels(), rotation=25, ha="right")
         fig.tight_layout()
 
         self.mostrar_grafica(fig)
         self.mostrar_tabla(conteo)
 
-    def consulta_3(self):
-        """PIB per capita promedio por continente — barras verticales"""
+    def consulta_2(self):
+        """Distribucion de precios — histograma"""
         self.limpiar_resultados()
-        self.mostrar_titulo("PIB per capita por continente",
-                            "Promedio del PIB per capita en dolares (USD)")
+        self.mostrar_titulo("Distribucion de precios",
+                            "Como se distribuyen los precios de todas las camaras")
 
-        pib = self.df.groupby("continente")["pib_per_capita"].mean().round(0).reset_index()
-        pib.columns = ["continente", "pib_promedio"]
-        pib = pib.sort_values("pib_promedio", ascending=False)
+        precios = self.df["precio"].dropna()
 
         fig, ax = plt.subplots(figsize=(8, 4))
-        ax.bar(pib["continente"], pib["pib_promedio"], color="steelblue")
-        ax.set_ylabel("PIB per capita (USD)")
-        ax.set_title("PIB per capita promedio por continente")
-        plt.setp(ax.get_xticklabels(), rotation=20, ha="right")
+        ax.hist(precios, bins=30, color="steelblue", edgecolor="white")
+        ax.set_xlabel("Precio (USD)")
+        ax.set_ylabel("Numero de camaras")
+        ax.set_title("Distribucion de precios")
         ax.grid(axis="y", alpha=0.4)
         fig.tight_layout()
 
         self.mostrar_grafica(fig)
-        self.mostrar_tabla(pib)
 
-    def consulta_4(self):
-        """Temperatura media vs esperanza de vida — grafica de dispersion"""
-        self.limpiar_resultados()
-        self.mostrar_titulo("Temperatura vs Esperanza de vida",
-                            "Relacion entre el clima y cuanto viven las personas")
-
-        fig, ax = plt.subplots(figsize=(8, 5))
-
-        colores = ["steelblue", "tomato", "seagreen", "orange", "purple", "brown", "teal"]
-        for i, continente in enumerate(self.df["continente"].unique()):
-            sub = self.df[self.df["continente"] == continente]
-            ax.scatter(sub["temperatura_media"], sub["esperanza_vida"],
-                       label=continente, color=colores[i % len(colores)], alpha=0.7)
-
-        ax.set_xlabel("Temperatura media (C)")
-        ax.set_ylabel("Esperanza de vida (anos)")
-        ax.set_title("Temperatura media vs Esperanza de vida")
-        ax.legend(fontsize=8)
-        ax.grid(alpha=0.4)
-        fig.tight_layout()
-
-        self.mostrar_grafica(fig)
-
-        resumen = self.df.groupby("continente")[["temperatura_media", "esperanza_vida"]].mean().round(1).reset_index()
+        resumen = precios.describe().round(2).reset_index()
+        resumen.columns = ["estadistica", "valor"]
         self.mostrar_tabla(resumen)
 
-    def consulta_5(self):
-        """Top 15 ciudades con mayor densidad poblacional"""
+    def consulta_3(self):
+        """Top 10 camaras mas caras"""
         self.limpiar_resultados()
-        self.mostrar_titulo("Densidad poblacional - Top 15",
-                            "Ciudades con mas habitantes por km2")
+        self.mostrar_titulo("Top 10 camaras mas caras",
+                            "Los modelos con el precio mas alto en el dataset")
 
-        top = self.df.nlargest(15, "densidad")[["ciudad", "pais", "densidad"]].reset_index(drop=True)
+        top = self.df.nlargest(10, "precio")[["modelo", "marca", "precio"]].reset_index(drop=True)
 
         fig, ax = plt.subplots(figsize=(8, 5))
-        ax.barh(top["ciudad"][::-1], top["densidad"][::-1], color="tomato")
-        ax.set_xlabel("Habitantes por km2")
-        ax.set_title("Top 15 ciudades mas densas")
+        ax.barh(top["modelo"][::-1], top["precio"][::-1], color="tomato")
+        ax.set_xlabel("Precio (USD)")
+        ax.set_title("Top 10 camaras mas caras")
         ax.grid(axis="x", alpha=0.4)
         fig.tight_layout()
 
         self.mostrar_grafica(fig)
         self.mostrar_tabla(top)
 
-    def consulta_6(self):
-        """Precipitacion anual por continente — min, promedio y max"""
+    def consulta_4(self):
+        """Top 10 camaras mas baratas (precio > 0)"""
         self.limpiar_resultados()
-        self.mostrar_titulo("Precipitacion anual por continente",
-                            "Minima, promedio y maxima precipitacion en mm por ano")
+        self.mostrar_titulo("Top 10 camaras mas baratas",
+                            "Los modelos con el precio mas bajo (excluyendo precio cero)")
 
-        prec = self.df.groupby("continente")["precipitacion_anual"].agg(
-            minimo="min", promedio="mean", maximo="max").round(0).reset_index()
+        baratas = self.df[self.df["precio"] > 0].nsmallest(10, "precio")[
+            ["modelo", "marca", "precio"]].reset_index(drop=True)
 
-        fig, ax = plt.subplots(figsize=(9, 4))
-        x = range(len(prec))
-        ancho = 0.25
-
-        ax.bar([i - ancho for i in x], prec["minimo"],   ancho * 1.8, label="Minimo",   color="skyblue")
-        ax.bar([i           for i in x], prec["promedio"], ancho * 1.8, label="Promedio", color="steelblue")
-        ax.bar([i + ancho for i in x], prec["maximo"],   ancho * 1.8, label="Maximo",   color="navy")
-
-        ax.set_xticks(list(x))
-        ax.set_xticklabels(prec["continente"], rotation=20, ha="right")
-        ax.set_ylabel("mm / ano")
-        ax.set_title("Precipitacion anual por continente")
-        ax.legend()
-        ax.grid(axis="y", alpha=0.4)
-        fig.tight_layout()
-
-        self.mostrar_grafica(fig)
-        self.mostrar_tabla(prec)
-
-    def consulta_7(self):
-        """Tasa de alfabetizacion promedio por continente"""
-        self.limpiar_resultados()
-        self.mostrar_titulo("Alfabetizacion por continente",
-                            "Porcentaje promedio de personas que saben leer y escribir")
-
-        alfa = self.df.groupby("continente")["alfabetizacion"].mean().round(1).sort_values().reset_index()
-        alfa.columns = ["continente", "alfabetizacion"]
-
-        fig, ax = plt.subplots(figsize=(8, 4))
-        colores = ["tomato" if v < 90 else "seagreen" for v in alfa["alfabetizacion"]]
-        ax.barh(alfa["continente"], alfa["alfabetizacion"], color=colores)
-        ax.axvline(90, color="gray", linestyle="--", linewidth=1, label="90%")
-        ax.set_xlabel("Alfabetizacion (%)")
-        ax.set_title("Tasa de alfabetizacion por continente")
-        ax.set_xlim(0, 105)
-        ax.legend()
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.barh(baratas["modelo"][::-1], baratas["precio"][::-1], color="seagreen")
+        ax.set_xlabel("Precio (USD)")
+        ax.set_title("Top 10 camaras mas baratas")
         ax.grid(axis="x", alpha=0.4)
         fig.tight_layout()
 
         self.mostrar_grafica(fig)
-        self.mostrar_tabla(alfa)
+        self.mostrar_tabla(baratas)
 
-    def consulta_8(self):
-        """Ciudades mas antiguas y mas modernas segun ano de fundacion"""
+    def consulta_5(self):
+        """Precio promedio por marca"""
         self.limpiar_resultados()
-        self.mostrar_titulo("Ciudades mas antiguas y mas modernas",
-                            "Las 5 ciudades mas antiguas y las 5 mas recientes")
+        self.mostrar_titulo("Precio promedio por marca",
+                            "Promedio de precio de las marcas con al menos 5 modelos")
 
-        antiguas = self.df.nsmallest(5, "año_fundacion")[["ciudad", "pais", "año_fundacion"]]
-        modernas = self.df.nlargest(5, "año_fundacion")[["ciudad", "pais", "año_fundacion"]]
+        marcas_validas = self.df["marca"].value_counts()
+        marcas_validas = marcas_validas[marcas_validas >= 5].index
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-
-        ax1.barh(antiguas["ciudad"], antiguas["año_fundacion"], color="purple")
-        ax1.set_title("Las 5 mas antiguas")
-        ax1.set_xlabel("Ano de fundacion")
-
-        ax2.barh(modernas["ciudad"][::-1], modernas["año_fundacion"][::-1], color="orange")
-        ax2.set_title("Las 5 mas modernas")
-        ax2.set_xlabel("Ano de fundacion")
-
-        fig.tight_layout()
-        self.mostrar_grafica(fig)
-
-        combinado = pd.concat([antiguas, modernas]).reset_index(drop=True)
-        self.mostrar_tabla(combinado)
-
-    def consulta_9(self):
-        """Correlacion entre PIB per capita y esperanza de vida"""
-        self.limpiar_resultados()
-        self.mostrar_titulo("Correlacion: PIB vs Esperanza de vida",
-                            "A mayor PIB per capita, mayor esperanza de vida?")
+        precio_marca = (self.df[self.df["marca"].isin(marcas_validas)]
+                        .groupby("marca")["precio"]
+                        .mean().round(2)
+                        .sort_values(ascending=False)
+                        .reset_index())
+        precio_marca.columns = ["marca", "precio_promedio"]
 
         fig, ax = plt.subplots(figsize=(8, 5))
+        ax.bar(precio_marca["marca"], precio_marca["precio_promedio"], color="steelblue")
+        ax.set_ylabel("Precio promedio (USD)")
+        ax.set_title("Precio promedio por marca")
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+        ax.grid(axis="y", alpha=0.4)
+        fig.tight_layout()
 
-        colores = ["steelblue", "tomato", "seagreen", "orange", "purple", "brown", "teal"]
-        for i, continente in enumerate(self.df["continente"].unique()):
-            sub = self.df[self.df["continente"] == continente]
-            ax.scatter(sub["pib_per_capita"], sub["esperanza_vida"],
-                       label=continente, color=colores[i % len(colores)], alpha=0.8)
+        self.mostrar_grafica(fig)
+        self.mostrar_tabla(precio_marca)
 
-        # Linea de tendencia simple (regresion lineal manual)
-        x = self.df["pib_per_capita"].dropna()
-        y = self.df["esperanza_vida"].dropna()
-        mask = self.df["pib_per_capita"].notna() & self.df["esperanza_vida"].notna()
-        x_vals = self.df.loc[mask, "pib_per_capita"]
-        y_vals = self.df.loc[mask, "esperanza_vida"]
-        pendiente = x_vals.cov(y_vals) / x_vals.var()
-        intercepto = y_vals.mean() - pendiente * x_vals.mean()
-        ax.plot([x_vals.min(), x_vals.max()],
-                [pendiente * x_vals.min() + intercepto, pendiente * x_vals.max() + intercepto],
-                color="black", linewidth=1.5, linestyle="--", label="Tendencia")
+    def consulta_6(self):
+        """Zoom promedio por marca"""
+        self.limpiar_resultados()
+        self.mostrar_titulo("Zoom promedio por marca",
+                            "Alcance de zoom promedio (tele) de cada marca")
 
-        ax.set_xlabel("PIB per capita (USD)")
-        ax.set_ylabel("Esperanza de vida (anos)")
-        ax.set_title("PIB per capita vs Esperanza de vida")
-        ax.legend(fontsize=8)
+        marcas_validas = self.df["marca"].value_counts()
+        marcas_validas = marcas_validas[marcas_validas >= 5].index
+
+        zoom_marca = (self.df[self.df["marca"].isin(marcas_validas)]
+                      .groupby("marca")["zoom"]
+                      .mean().round(1)
+                      .sort_values(ascending=False)
+                      .reset_index())
+        zoom_marca.columns = ["marca", "zoom_promedio"]
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.bar(zoom_marca["marca"], zoom_marca["zoom_promedio"], color="orange")
+        ax.set_ylabel("Zoom promedio (mm)")
+        ax.set_title("Zoom promedio por marca")
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+        ax.grid(axis="y", alpha=0.4)
+        fig.tight_layout()
+
+        self.mostrar_grafica(fig)
+        self.mostrar_tabla(zoom_marca)
+
+    def consulta_7(self):
+        """Relacion entre peso y precio"""
+        self.limpiar_resultados()
+        self.mostrar_titulo("Peso vs Precio",
+                            "Hay relacion entre el peso de la camara y su precio?")
+
+        datos = self.df[["peso", "precio"]].dropna()
+        datos = datos[(datos["peso"] > 0) & (datos["precio"] > 0)]
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.scatter(datos["peso"], datos["precio"],
+                   alpha=0.4, color="steelblue", s=20)
+        ax.set_xlabel("Peso (gramos)")
+        ax.set_ylabel("Precio (USD)")
+        ax.set_title("Peso vs Precio de la camara")
         ax.grid(alpha=0.4)
         fig.tight_layout()
 
         self.mostrar_grafica(fig)
 
-        # Tabla de correlacion entre variables numericas clave
-        corr = self.df[["pib_per_capita", "esperanza_vida", "alfabetizacion"]].corr().round(3)
-        self.mostrar_tabla(corr.reset_index().rename(columns={"index": "variable"}))
+        resumen = datos.describe().round(2).reset_index()
+        resumen.columns = ["estadistica", "peso", "precio"]
+        self.mostrar_tabla(resumen)
+
+    def consulta_8(self):
+        """Distribucion de almacenamiento incluido"""
+        self.limpiar_resultados()
+        self.mostrar_titulo("Almacenamiento incluido",
+                            "Cuantas camaras incluyen cada cantidad de almacenamiento (MB)")
+
+        almacenamiento = self.df["almacenamiento"].dropna()
+        almacenamiento = almacenamiento[almacenamiento > 0]
+        conteo = almacenamiento.value_counts().sort_index().reset_index()
+        conteo.columns = ["almacenamiento_mb", "cantidad"]
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.bar(conteo["almacenamiento_mb"].astype(str),
+               conteo["cantidad"], color="purple")
+        ax.set_xlabel("Almacenamiento incluido (MB)")
+        ax.set_ylabel("Numero de camaras")
+        ax.set_title("Camaras por almacenamiento incluido")
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+        ax.grid(axis="y", alpha=0.4)
+        fig.tight_layout()
+
+        self.mostrar_grafica(fig)
+        self.mostrar_tabla(conteo)
+
+    def consulta_9(self):
+        """Comparacion enfoque normal vs enfoque macro por marca"""
+        self.limpiar_resultados()
+        self.mostrar_titulo("Enfoque normal vs Enfoque macro",
+                            "Comparacion del rango de enfoque entre los dos modos por marca")
+
+        marcas_validas = self.df["marca"].value_counts()
+        marcas_validas = marcas_validas[marcas_validas >= 5].index
+
+        resumen = (self.df[self.df["marca"].isin(marcas_validas)]
+                   .groupby("marca")[["enfoque_normal", "enfoque_macro"]]
+                   .mean().round(1)
+                   .sort_values("enfoque_normal", ascending=False)
+                   .reset_index())
+
+        fig, ax = plt.subplots(figsize=(9, 5))
+        x = range(len(resumen))
+        ancho = 0.35
+        ax.bar([i - ancho/2 for i in x], resumen["enfoque_normal"],
+               ancho, label="Enfoque normal", color="steelblue")
+        ax.bar([i + ancho/2 for i in x], resumen["enfoque_macro"],
+               ancho, label="Enfoque macro", color="tomato")
+        ax.set_xticks(list(x))
+        ax.set_xticklabels(resumen["marca"], rotation=30, ha="right")
+        ax.set_ylabel("Rango de enfoque (cm)")
+        ax.set_title("Enfoque normal vs macro por marca")
+        ax.legend()
+        ax.grid(axis="y", alpha=0.4)
+        fig.tight_layout()
+
+        self.mostrar_grafica(fig)
+        self.mostrar_tabla(resumen)
 
     def consulta_10(self):
-        """Distribucion de la poblacion total por continente"""
+        """Cantidad de camaras por rango de precio"""
         self.limpiar_resultados()
-        self.mostrar_titulo("Distribucion de poblacion mundial",
-                            "Suma total de habitantes por continente en el dataset")
+        self.mostrar_titulo("Camaras por rango de precio",
+                            "Cuantos modelos hay en cada rango de precio")
 
-        pob = self.df.groupby("continente")["poblacion"].sum().sort_values(ascending=False).reset_index()
-        pob.columns = ["continente", "poblacion_total"]
-        pob["porcentaje"] = (pob["poblacion_total"] / pob["poblacion_total"].sum() * 100).round(1)
-        pob["millones"] = (pob["poblacion_total"] / 1_000_000).round(1)
+        rangos    = [0, 100, 200, 300, 500, 800, 1500, 8000]
+        etiquetas = ["0-100", "100-200", "200-300",
+                     "300-500", "500-800", "800-1500", "1500+"]
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        df_valido = self.df[self.df["precio"] > 0].copy()
+        df_valido["rango"] = pd.cut(df_valido["precio"],
+                                     bins=rangos, labels=etiquetas)
 
-        ax1.pie(pob["poblacion_total"], labels=pob["continente"],
-                autopct="%1.1f%%", startangle=90)
-        ax1.set_title("Proporcion de poblacion (%)")
+        conteo = df_valido["rango"].value_counts().sort_index().reset_index()
+        conteo.columns = ["rango_precio", "cantidad"]
 
-        ax2.barh(pob["continente"][::-1], pob["millones"][::-1], color="steelblue")
-        ax2.set_xlabel("Millones de habitantes")
-        ax2.set_title("Poblacion total por continente")
-        ax2.grid(axis="x", alpha=0.4)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+        ax1.bar(conteo["rango_precio"], conteo["cantidad"], color="steelblue")
+        ax1.set_xlabel("Rango de precio (USD)")
+        ax1.set_ylabel("Cantidad de camaras")
+        ax1.set_title("Camaras por rango de precio")
+        plt.setp(ax1.get_xticklabels(), rotation=30, ha="right")
+        ax1.grid(axis="y", alpha=0.4)
+
+        ax2.pie(conteo["cantidad"], labels=conteo["rango_precio"],
+                autopct="%1.0f%%", startangle=90)
+        ax2.set_title("Proporcion (%)")
 
         fig.tight_layout()
         self.mostrar_grafica(fig)
-        self.mostrar_tabla(pob[["continente", "millones", "porcentaje"]])
+        self.mostrar_tabla(conteo)
 
 
-
+# -------------------------------------------------------
+# PUNTO DE ENTRADA
+# -------------------------------------------------------
 
 if __name__ == "__main__":
     app = VentanaLogin()
