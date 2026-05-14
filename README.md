@@ -1,9 +1,9 @@
-# 🌍 Dashboard de Ciudades Mundiales
+#  Dashboard de Ciudades Mundiales
 ### Fundamentos de Inteligencia Artificial · IPN CECyT 9 Bátiz
 
 ---
 
-## 📦 Instalación
+##  Instalación
 
 Abre una terminal en la carpeta del proyecto y ejecuta:
 
@@ -21,7 +21,7 @@ python dashboard.py
 
 ---
 
-## 🔐 Credenciales de prueba
+## Credenciales de prueba
 
 | Usuario  | Contraseña   | Rol    |
 |----------|-------------|--------|
@@ -37,7 +37,7 @@ usuario:contraseña:Nombre Completo:rol
 
 ---
 
-## 📊 Consultas incluidas (10)
+## Consultas incluidas (10)
 
 | # | Consulta | Tipo de gráfica |
 |---|----------|----------------|
@@ -54,7 +54,7 @@ usuario:contraseña:Nombre Completo:rol
 
 ---
 
-## 📁 Archivos
+## Archivos
 
 ```
 ai_dashboard/
@@ -66,13 +66,13 @@ ai_dashboard/
 
 ---
 
-## ✅ Características
+## Características
 
-- ✅ Login con lectura de usuario/contraseña desde archivo `.txt`
-- ✅ Validación de campos (vacíos, longitud mínima, credenciales)
-- ✅ Mostrar/ocultar contraseña
-- ✅ Resultados en frame separado (sidebar + panel de resultados)
-- ✅ Tablas interactivas con scroll para cada consulta
-- ✅ 10 consultas complejas con pandas + matplotlib
-- ✅ Tema oscuro con CustomTkinter
-- ✅ 50 ciudades del mundo con 14 variables numéricas
+-  Login con lectura de usuario/contraseña desde archivo `.txt`
+- Validación de campos (vacíos, longitud mínima, credenciales)
+-  Mostrar/ocultar contraseña
+-  Resultados en frame separado (sidebar + panel de resultados)
+-  Tablas interactivas con scroll para cada consulta
+-  10 consultas complejas con pandas + matplotlib
+-  Tema oscuro con CustomTkinter
+- 50 ciudades del mundo con 14 variables numéricas
