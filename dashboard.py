@@ -627,10 +627,6 @@ class VentanaDashboard(ctk.CTk):
         self.mostrar_tabla(conteo)
 
 
-# -------------------------------------------------------
-# PUNTO DE ENTRADA
-# -------------------------------------------------------
-
 if __name__ == "__main__":
     app = VentanaLogin()
     app.mainloop()
