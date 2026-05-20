@@ -57,9 +57,6 @@ def leer_csv():
     return df
 
 
-# --------------------------------------------------
-# LOGIN
-# --------------------------------------------------
 
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -97,9 +94,6 @@ if not st.session_state.autenticado:
     st.stop()
 
 
-# --------------------------------------------------
-# DASHBOARD PRINCIPAL
-# --------------------------------------------------
 
 df = leer_csv()
 
@@ -344,3 +338,6 @@ elif consulta == "10. Camaras por rango de precio":
         st.pyplot(fig2)
 
     st.dataframe(conteo, use_container_width=True)
+
+    # streamlit run dashboard.py
+    # http://localhost:8501
